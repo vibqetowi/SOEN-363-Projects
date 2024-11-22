@@ -1,0 +1,69 @@
+Table locations {
+  id char(36) [pk]
+  country varchar
+  city varchar
+  latitude decimal
+  longitude decimal
+}
+
+Table disasters {
+  id char(36) [pk]
+  type varchar
+  start_date timestamp
+  end_date timestamp
+  description text
+  magnitude decimal
+  scale varchar
+  radius_km decimal
+}
+
+Table impacts {
+  disaster_id char(36) [pk]
+  casualties integer
+  injuries integer
+  economic_loss decimal
+  area_affected_km2 decimal
+}
+
+Table earthquakes {
+  disaster_id char(36) [pk]
+  depth decimal
+  aftershocks integer
+}
+
+Table wind_disasters {
+  disaster_id char(36) [pk]
+  pressure decimal
+  wind_pattern varchar
+}
+
+Table volcanic_eruptions {
+  disaster_id char(36) [pk]
+  ash_height decimal
+  lava_type varchar
+}
+
+Table water_disasters {
+  disaster_id char(36) [pk]
+  water_height decimal
+  flow_rate decimal
+}
+
+Table disaster_locations {
+  disaster_id char(36)
+  location_id char(36)
+  timestamp timestamp
+  
+  indexes {
+    (disaster_id, location_id) [pk]
+  }
+}
+
+// References
+Ref: impacts.disaster_id > disasters.id [delete: cascade]
+Ref: earthquakes.disaster_id > disasters.id [delete: cascade]
+Ref: wind_disasters.disaster_id > disasters.id [delete: cascade]
+Ref: volcanic_eruptions.disaster_id > disasters.id [delete: cascade]
+Ref: water_disasters.disaster_id > disasters.id [delete: cascade]
+Ref: disaster_locations.disaster_id > disasters.id [delete: cascade]
+Ref: disaster_locations.location_id > locations.id [delete: cascade]

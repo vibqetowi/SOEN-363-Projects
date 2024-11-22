@@ -91,19 +91,21 @@ pip install -r requirements.txt
 
 ## Documentation
 
-
 ### Phase 1
 
 - [Design Documentation](https://docs.google.com/document/d/1AYF4yOZNI-FjDaTqbbB1GJdgQ2_LfGdTjHPYtuMPMVQ/edit?tab=t.0)
 - ER Diagram: Created using PlantUML Chen implementation
-  - Code: `Documentation/chen-erd.txt`
+  - Code: Documentation/chen-erd.txt
   - Reference: [PlantUML Documentation](https://plantuml.com/er-diagram)
-![chen-erd](./Documentation/chen-erd.png)
+    ![chen-erd](./Documentation/chen-erd.png)
 
 ### Relational Model: Available on [dbdio platform](https://dbdiagram.io/d/363-Project-67409acce9daa85aca64bf0a)
-There is no local rendering for dbdio, please go on the site. 
-  - Implementation: Class Table Inheritance pattern
-  - Note: Major data in disasters table; inherited tables contain scientific details
-    - This means joins will be required to access scientific details, however this is an acceptable performance tradeoff because of the primary use cases stated [above](#target-users).
+
+There is no local rendering for dbdio, please go on the site.
+
+- Implementation: Class Table Inheritance pattern
+- Code: [dbdio-code.txt](./Documentation/dbdio-code.txt)
+- Note: Major data in disasters table; inherited tables contain scientific details
+  - This means joins will be required to access scientific details, however this is an acceptable performance tradeoff because of the primary use cases stated [above](#target-users).
 
 <iframe width="560" height="315" src='https://dbdiagram.io/e/67409acce9daa85aca64bf0a/67409d1ce9daa85aca650753'> </iframe>
