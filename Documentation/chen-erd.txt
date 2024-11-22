@@ -1,0 +1,64 @@
+@startchen
+
+entity LOCATION {
+  id <<key>>
+  country : STRING
+  city : STRING
+  latitude : REAL
+  longitude : REAL
+}
+
+entity DISASTER {
+  id <<key>>
+  type : STRING
+  start_date : DATETIME
+  end_date : DATETIME
+  description : STRING
+  magnitude : REAL
+  scale : STRING
+  radius_km : REAL
+}
+
+entity IMPACT <<weak>> {
+  casualties : INTEGER
+  injuries : INTEGER
+  economic_loss : REAL
+  area_affected_km2 : REAL
+}
+
+entity EARTHQUAKE {
+  depth : REAL
+  aftershocks : INTEGER
+}
+
+entity WIND_DISASTER {
+  pressure : REAL
+  wind_pattern : STRING
+}
+
+entity VOLCANIC_ERUPTION {
+  ash_height : REAL
+  lava_type : STRING
+}
+
+entity WATER_DISASTER {
+  water_height : REAL
+  flow_rate : REAL
+}
+
+relationship OCCURS_AT {
+  timestamp : DATETIME
+}
+
+relationship HAS_IMPACT <<identifying>> {
+}
+
+OCCURS_AT -N- DISASTER
+OCCURS_AT -N- LOCATION
+
+HAS_IMPACT -1- DISASTER
+HAS_IMPACT =1= IMPACT
+
+DISASTER ->- U { EARTHQUAKE, WIND_DISASTER, VOLCANIC_ERUPTION, WATER_DISASTER }
+
+@endchen

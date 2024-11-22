@@ -1,9 +1,0 @@
-“How you provide the link between the two data sources. Note that the data that you are collecting may not necessarily use same keys / identifiers.”
-
-  One data source contains data about earthquakes only, while the other has information about multiple disaster types (tropical cyclone, earthquake, flood, volcano, drought). 
-  To ensure consistency, only the common attributes for earthquakes from both data sources will be stored. Earthquakes will be implemented as a specific type of disaster in
-  the database (see ERD), so it will be possible to store all disaster types with basic information.
-
-  Every disaster comes with the time, type (tropical cyclone, earthquake, flood, volcano, drought), and location. 
-  Earthquakes have additional information (depth in km, and magnitude). Disaster will be implemented as a weak entity, since a disaster must happen at a specific location. 
-  The “id” attribute in the Disaster entity will be an internal integer primary key.
