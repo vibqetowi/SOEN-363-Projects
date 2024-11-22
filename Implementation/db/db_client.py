@@ -46,90 +46,34 @@ class DatabaseClient:
             print("Database connection closed.")
 
     def create_db(self):
-        cur = self.conn.cursor()
-
-        # Creating Disaster table (use CREATE TABLE IF NOT EXISTS)
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS Disaster (
-                id SERIAL PRIMARY KEY,
-                time TIMESTAMP NOT NULL,
-                type VARCHAR(50) NOT NULL,
-                latitude NUMERIC(9,6) NOT NULL,
-                longitude NUMERIC(9,6) NOT NULL,
-                modified_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                CONSTRAINT chk_coordinates CHECK (latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180)
-            );
-            """
-        )
-
-        # Creating Earthquake table (use CREATE TABLE IF NOT EXISTS)
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS Earthquake (
-                disaster_id INT PRIMARY KEY,
-                depth NUMERIC(5,2) NOT NULL,
-                magnitude NUMERIC(3,1) NOT NULL CHECK (magnitude >= 0 AND magnitude <= 10),
-                CONSTRAINT fk_earthquake_disaster FOREIGN KEY (disaster_id) REFERENCES Disaster (id) ON DELETE CASCADE
-            );
-            """
-        )
-
-        # Drop the existing trigger if it exists before creating it
-        cur.execute(
-            """
-            DROP TRIGGER IF EXISTS update_takes_modtime ON Disaster;
-            """
-        )
-
-        # Trigger to update Disaster table
-        cur.execute(
-            """
-            CREATE OR REPLACE FUNCTION update_modified_on()
-            RETURNS TRIGGER AS $$
-            BEGIN
-                NEW.modified_on = NOW();
-                RETURN NEW;
-            END;
-            $$ LANGUAGE plpgsql;
-
-            CREATE TRIGGER update_takes_modtime
-            BEFORE UPDATE ON Disaster
-            FOR EACH ROW
-            EXECUTE FUNCTION update_modified_on();
-            """
-        )
-
-        # Drop the existing trigger if it exists before creating it
-        cur.execute(
-            """
-            DROP TRIGGER IF EXISTS earthquake_update_disaster ON Earthquake;
-            """
-        )
-
-        # Trigger to update corresponding Disaster when changes are made to Earthquake table
-        cur.execute(
-            """
-            CREATE OR REPLACE FUNCTION earthquake_update_disaster()
-            RETURNS TRIGGER AS $$
-            BEGIN
-                UPDATE Disaster
-                SET modified_on = NOW()
-                WHERE id = NEW.disaster_id;
-                RETURN NULL;
-            END;
-            $$ LANGUAGE plpgsql;
-
-            CREATE TRIGGER earthquake_update_disaster
-            AFTER UPDATE ON Earthquake
-            FOR EACH ROW
-            EXECUTE FUNCTION earthquake_update_disaster();
-            """
-        )
-
-        self.conn.commit()
-        cur.close()
-
+        """Execute DDL.sql against the PostgreSQL database"""
+    # Get path to DDL.sql
+    ddl_path = Path(__file__).parent / 'DDL.sql'
+    
+    try:
+        # Read DDL.sql content
+        with open(ddl_path, 'r') as f:
+            ddl_content = f.read()
+        
+        # Connect to the database
+        print("Connecting to database...")
+        conn = psycopg2.connect(**DB_CONFIG)
+        
+        # Create a cursor and execute the DDL
+        with conn.cursor() as cur:
+            print("Executing DDL.sql...")
+            cur.execute(ddl_content)
+        
+        # Commit the changes
+        conn.commit()
+        print("DDL execution completed successfully")
+        
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
+            
     def populate_db(self, events):
         cur = self.conn.cursor()
 
