@@ -23,8 +23,8 @@ def get_events():
 
         time = formatTime(properties.get("time", "N/A"))
         coordinates = geometry.get("coordinates", [0, 0, 0])
-        latitude = coordinates[1].round(decimals=4)
-        longitude = coordinates[0].round(decimals=4)
+        latitude = coordinates[1]
+        longitude = coordinates[0]
         depth = coordinates[2]
         magnitude = properties.get("mag", "N/A")
         event_type = properties.get("type", "N/A")

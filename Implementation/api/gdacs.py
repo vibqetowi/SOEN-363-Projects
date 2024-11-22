@@ -36,8 +36,8 @@ def get_events():
         #filtered for only necessary fields
         event = {
             "time": properties.get("fromdate", "N/A"),
-            "latitude": geometry.get("coordinates", [0,0])[0],
-            "longitude": geometry.get("coordinates", [0,0])[1],
+            "latitude": geometry.get("coordinates", [0,0])[1],
+            "longitude": geometry.get("coordinates", [0,0])[0],
             "depth": depth,
             "magnitude": magnitude,
             "event_type": event_types.get(properties.get("eventtype", "N/A")).capitalize(),
