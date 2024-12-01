@@ -1,71 +1,44 @@
-CREATE TABLE "locations" (
-  "id" char(36) PRIMARY KEY,
-  "country" varchar,
-  "city" varchar,
-  "latitude" decimal,
-  "longitude" decimal
+CREATE TABLE Disaster (
+    id          SERIAL PRIMARY KEY,
+    time        TIMESTAMP      NOT NULL,
+    type        VARCHAR(50)    NOT NULL,
+    latitude    DECIMAL(9, 6)  NOT NULL,
+    longitude   DECIMAL(9, 6)  NOT NULL,
+    modified_on TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_coordinates CHECK (latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180)
 );
 
-CREATE TABLE "disasters" (
-  "id" char(36) PRIMARY KEY,
-  "type" varchar,
-  "start_date" timestamp,
-  "end_date" timestamp,
-  "description" text,
-  "magnitude" decimal,
-  "scale" varchar,
-  "radius_km" decimal
+CREATE TABLE Earthquake (
+    disaster_id INT PRIMARY KEY,
+    depth DECIMAL(5, 2) NOT NULL,
+    magnitude DECIMAL(3, 1) NOT NULL CHECK (magnitude >= 0 AND magnitude <= 10),
+    CONSTRAINT fk_earthquake_disaster FOREIGN KEY (disaster_id) REFERENCES Disaster (id) ON DELETE CASCADE
 );
 
-CREATE TABLE "impacts" (
-  "disaster_id" char(36) PRIMARY KEY,
-  "casualties" integer,
-  "injuries" integer,
-  "economic_loss" decimal,
-  "area_affected_km2" decimal
-);
+CREATE OR REPLACE FUNCTION update_modified_on()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.modified_on := CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-CREATE TABLE "earthquakes" (
-  "disaster_id" char(36) PRIMARY KEY,
-  "depth" decimal,
-  "aftershocks" integer
-);
+CREATE TRIGGER update_takes_modtime
+BEFORE UPDATE ON Disaster
+FOR EACH ROW
+EXECUTE FUNCTION update_modified_on();
 
-CREATE TABLE "wind_disasters" (
-  "disaster_id" char(36) PRIMARY KEY,
-  "pressure" decimal,
-  "wind_pattern" varchar
-);
+CREATE OR REPLACE FUNCTION earthquake_update_disaster()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Disaster
+    SET modified_on = CURRENT_TIMESTAMP
+    WHERE id = NEW.disaster_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-CREATE TABLE "volcanic_eruptions" (
-  "disaster_id" char(36) PRIMARY KEY,
-  "ash_height" decimal,
-  "lava_type" varchar
-);
-
-CREATE TABLE "water_disasters" (
-  "disaster_id" char(36) PRIMARY KEY,
-  "water_height" decimal,
-  "flow_rate" decimal
-);
-
-CREATE TABLE "disaster_locations" (
-  "disaster_id" char(36),
-  "location_id" char(36),
-  "timestamp" timestamp,
-  PRIMARY KEY ("disaster_id", "location_id")
-);
-
-ALTER TABLE "impacts" ADD FOREIGN KEY ("disaster_id") REFERENCES "disasters" ("id") ON DELETE CASCADE;
-
-ALTER TABLE "earthquakes" ADD FOREIGN KEY ("disaster_id") REFERENCES "disasters" ("id") ON DELETE CASCADE;
-
-ALTER TABLE "wind_disasters" ADD FOREIGN KEY ("disaster_id") REFERENCES "disasters" ("id") ON DELETE CASCADE;
-
-ALTER TABLE "volcanic_eruptions" ADD FOREIGN KEY ("disaster_id") REFERENCES "disasters" ("id") ON DELETE CASCADE;
-
-ALTER TABLE "water_disasters" ADD FOREIGN KEY ("disaster_id") REFERENCES "disasters" ("id") ON DELETE CASCADE;
-
-ALTER TABLE "disaster_locations" ADD FOREIGN KEY ("disaster_id") REFERENCES "disasters" ("id") ON DELETE CASCADE;
-
-ALTER TABLE "disaster_locations" ADD FOREIGN KEY ("location_id") REFERENCES "locations" ("id") ON DELETE CASCADE;
+CREATE TRIGGER earthquake_update_disaster_trigger
+AFTER UPDATE ON Earthquake
+FOR EACH ROW
+EXECUTE FUNCTION earthquake_update_disaster();

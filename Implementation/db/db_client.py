@@ -1,3 +1,4 @@
+from pathlib import Path
 import psycopg2
 from pprint import pprint
 
@@ -47,32 +48,44 @@ class DatabaseClient:
 
     def create_db(self):
         """Execute DDL.sql against the PostgreSQL database"""
-    # Get path to DDL.sql
-    ddl_path = Path(__file__).parent / 'DDL.sql'
+        # Get path to DDL.sql
+        ddl_path = Path(__file__).parent / 'DDL.sql'
     
-    try:
-        # Read DDL.sql content
-        with open(ddl_path, 'r') as f:
-            ddl_content = f.read()
-        
-        # Connect to the database
-        print("Connecting to database...")
-        conn = psycopg2.connect(**DB_CONFIG)
-        
-        # Create a cursor and execute the DDL
-        with conn.cursor() as cur:
-            print("Executing DDL.sql...")
-            cur.execute(ddl_content)
-        
-        # Commit the changes
-        conn.commit()
-        print("DDL execution completed successfully")
-        
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    finally:
-        if 'conn' in locals():
-            conn.close()
+        try:
+            # Read DDL.sql content
+            with open(ddl_path, 'r') as f:
+                ddl_content = f.read()
+
+            # Connect to the database
+            print("Connecting to database...")
+            #ENTER INFO HERE
+            conn = psycopg2.connect(dbname = "",user = "",password = "",host = "")
+
+            # Create a cursor and execute the DDL
+            with conn.cursor() as cur:
+                print("Executing DDL.sql...")
+                self.create_table_if_not_exists(ddl_content)
+
+            # Commit the changes
+            print("DDL execution completed successfully")
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            if 'conn' in locals():
+                conn.close()
+
+    def create_table_if_not_exists(self, query):
+        cur = self.conn.cursor()
+        table_name = query.split()[2].lower()
+        cur.execute(
+            "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = %s AND table_schema = 'public')",
+            (table_name,)
+        )
+        exists = cur.fetchone()[0]
+        if not exists:
+            cur.execute(query)
+            self.conn.commit()
             
     def populate_db(self, events):
         cur = self.conn.cursor()
@@ -94,14 +107,15 @@ class DatabaseClient:
                 disaster_query = """
                     INSERT INTO Disaster (time, type, latitude, longitude)
                     VALUES (%s, %s, %s, %s)
+                    RETURNING id
                 """
-                cur.execute(disaster_query, (event['time'], event['type'], event['latitude'], event['longitude']))
+                cur.execute(disaster_query, (event['time'], event['event_type'], event['latitude'], event['longitude']))
 
                 # Get the last inserted disaster ID
-                disaster_id = cur.lastrowid
+                disaster_id = cur.fetchone()[0]
 
                 # If the event is an earthquake, insert into Earthquake table
-                if event['type'].lower() == 'earthquake':
+                if event['event_type'].lower() == 'earthquake':
                     earthquake_query = """
                         INSERT INTO Earthquake (disaster_id, depth, magnitude)
                         VALUES (%s, %s, %s)
